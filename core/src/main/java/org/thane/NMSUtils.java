@@ -1,8 +1,6 @@
 package org.thane;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -13,7 +11,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
 import org.thane.api.ItemStackTypeAdapterFactory;
 import org.thane.api.NBT;
 
@@ -35,10 +35,24 @@ public class NMSUtils extends JavaPlugin {
             version = packageName.substring(packageName.lastIndexOf('.') + 1);
 
             itemStackTypeAdapterFactory = (ItemStackTypeAdapterFactory) Class.forName("org.thane.nms." + version + ".ItemStackTypeAdapterFactory").getConstructor().newInstance();
-            GSON = new GsonBuilder().setPrettyPrinting().enableComplexMapKeySerialization().registerTypeAdapterFactory(itemStackTypeAdapterFactory).create();
+            GSON = new GsonBuilder().setPrettyPrinting().enableComplexMapKeySerialization().disableHtmlEscaping().registerTypeAdapterFactory(itemStackTypeAdapterFactory)
+                    .setExclusionStrategies(new ExclusionStrategy() {
+                @Override
+                public boolean shouldSkipField(FieldAttributes f) {
+                    return (f.getDeclaringClass().getPackage().getName().contains("net.minecraft.server") || f.getDeclaringClass().getPackage().getName().contains("craftbukkit"))
+                            && f.getName().equalsIgnoreCase("handle");
+                }
+
+                @Override
+                public boolean shouldSkipClass(Class<?> clazz) {
+                    return false;
+                }
+            }).create();
             NBT.setGson(GSON);
             //noinspection unchecked
-            itemNBTConstructor = (Constructor<NBT>) Class.forName("org.thane.nms." + version + ".NBT").getConstructor(ItemStack.class);
+            Class<NBT> nbtClass = (Class<NBT>) Class.forName("org.thane.nms." + version + ".NBT");
+            itemNBTConstructor = nbtClass.getConstructor(ItemStack.class);
+            jsonNBTConstructor = nbtClass.getConstructor(JsonObject.class);
         } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
         }
@@ -87,7 +101,10 @@ public class NMSUtils extends JavaPlugin {
                     meta.setUnbreakable(true);
                     meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
                     itemStack.setItemMeta(meta);
-                    player.getInventory().addItem(itemStack);
+                    NBT nbt = NMSUtils.getNBT(itemStack);
+                    nbt.addNBT("this is some nice custom NBT!", "You bet it is!");
+                    nbt.addNBT("And this is a custom object", player);
+                    player.getInventory().addItem(nbt.copyOnto(itemStack));
                 } else {
                     ItemStack[] contents = new ItemStack[0];
                     try {
@@ -96,7 +113,6 @@ public class NMSUtils extends JavaPlugin {
                         e.printStackTrace();
                     }
                     player.getInventory().setContents(contents);
-
                 }
             }
             return true;
@@ -113,6 +129,7 @@ public class NMSUtils extends JavaPlugin {
     }
 
     private static Constructor<NBT> itemNBTConstructor;
+    private static Constructor<NBT> jsonNBTConstructor;
 
     public static NBT getNBT(ItemStack stack) {
         try {
@@ -121,5 +138,18 @@ public class NMSUtils extends JavaPlugin {
             e.printStackTrace();
             return new NBT(new JsonObject());
         }
+    }
+
+    public static NBT toNBT(JsonObject object) {
+        try {
+            return jsonNBTConstructor.newInstance(object);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+            return new NBT(new JsonObject());
+        }
+    }
+
+    public static NBT getEmptyNBT() {
+        return toNBT(new JsonObject());
     }
 }

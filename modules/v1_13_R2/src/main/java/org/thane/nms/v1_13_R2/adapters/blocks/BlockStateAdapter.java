@@ -70,8 +70,12 @@ public class BlockStateAdapter extends TypeAdapter<BlockState> {
             out.name("lock").value(((Lockable) value).getLock());
         }
         if (value instanceof CommandBlock) {
-            out.name("name").value(((CommandBlock) value).getName());
-            out.name("command").value(((CommandBlock) value).getCommand());
+            if (!((CommandBlock) value).getName().equalsIgnoreCase("@")) {
+                out.name("name").value(((CommandBlock) value).getName());
+            }
+            if (!((CommandBlock) value).getCommand().isEmpty()) {
+                out.name("command").value(((CommandBlock) value).getCommand());
+            }
         }
         if (value instanceof CreatureSpawner) {
             out.name("delay").value(((CreatureSpawner) value).getDelay());

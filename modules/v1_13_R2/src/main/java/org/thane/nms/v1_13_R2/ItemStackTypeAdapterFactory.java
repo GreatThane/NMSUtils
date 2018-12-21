@@ -3,6 +3,7 @@ package org.thane.nms.v1_13_R2;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.server.v1_13_R2.AttributeRanged;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -16,11 +17,16 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.thane.api.NBT;
 import org.thane.nms.v1_13_R2.adapters.blocks.*;
 import org.thane.nms.v1_13_R2.adapters.entities.OfflinePlayerAdapter;
+import org.thane.nms.v1_13_R2.adapters.entities.effects.PotionEffectAdapter;
 import org.thane.nms.v1_13_R2.adapters.enums.EnchantmentAdapter;
+import org.thane.nms.v1_13_R2.adapters.entities.effects.PotionEffectTypeAdapter;
 import org.thane.nms.v1_13_R2.adapters.items.*;
+import org.thane.nms.v1_13_R2.adapters.nms.AttributeRangedAdapter;
 
 public class ItemStackTypeAdapterFactory extends org.thane.api.ItemStackTypeAdapterFactory {
     @SuppressWarnings("unchecked cast")
@@ -55,6 +61,12 @@ public class ItemStackTypeAdapterFactory extends org.thane.api.ItemStackTypeAdap
             return (TypeAdapter<T>) new AttributeModifierAdapter(gson);
         } else if (NBT.class.isAssignableFrom(clazz)) {
             return (TypeAdapter<T>) new NBTAdapter(gson);
+        } else if (AttributeRanged.class.isAssignableFrom(clazz)) {
+            return (TypeAdapter<T>) new AttributeRangedAdapter();
+        } else if (PotionEffectType.class.isAssignableFrom(clazz)) {
+            return (TypeAdapter<T>) new PotionEffectTypeAdapter();
+        } else if (PotionEffect.class.isAssignableFrom(clazz)) {
+            return (TypeAdapter<T>) new PotionEffectAdapter(gson);
         } else return null;
     }
 }

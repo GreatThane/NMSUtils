@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
+import org.bukkit.potion.PotionEffectType;
 import org.thane.api.NBT;
 
 import java.io.IOException;
@@ -42,7 +43,8 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
             gson.getAdapter(ItemMeta.class).write(out, value.getItemMeta());
         }
         NBT nbt = new org.thane.nms.v1_13_R2.NBT(value).withExcludes("Unbreakable",
-                "HideFlags", "display", "Damage", "AttributeModifiers", "BlockEntityTag.Items", "BlockEntityTag.Lock", "BlockEntityTag.id", "Enchantments");
+                "HideFlags", "display", "Damage", "AttributeModifiers", "BlockEntityTag.Items", "BlockEntityTag.Lock", "BlockEntityTag.id", "Enchantments",
+                "BlockEntityTag.Command", "BlockEntityTag.CustomName", "BlockEntityTag.Primary", "BlockEntityTag.Secondary", "CustomPotionColor", "CustomPotionEffects", "Potion");
         if (!nbt.isEmpty()) {
             out.name("nbt");
             gson.getAdapter(NBT.class).write(out, nbt);

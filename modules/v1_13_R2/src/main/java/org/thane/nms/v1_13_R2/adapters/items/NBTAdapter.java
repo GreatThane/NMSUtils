@@ -25,6 +25,6 @@ public class NBTAdapter extends TypeAdapter<NBT> {
     @SuppressWarnings("unchecked")
     @Override
     public NBT read(JsonReader in) throws IOException {
-        return new NBT(gson.getAdapter(JsonObject.class).read(in));
+        return new org.thane.nms.v1_13_R2.NBT(gson.getAdapter(JsonObject.class).read(in));
     }
 }

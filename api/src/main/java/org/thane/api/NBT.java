@@ -59,6 +59,12 @@ public class NBT implements Serializable {
     public void applyTo(ItemStack stack) throws IllegalAccessException {
     }
 
+    public void combineWith(NBT nbt) {
+        for (Map.Entry<String, JsonElement> entry : nbt.asJsonObject().entrySet()) {
+            this.asJsonObject().add(entry.getKey(), entry.getValue());
+        }
+    }
+
     public NBT withExcludes(String... strings) {
         return withExcludes(new HashSet<>(Arrays.asList(strings)));
     }

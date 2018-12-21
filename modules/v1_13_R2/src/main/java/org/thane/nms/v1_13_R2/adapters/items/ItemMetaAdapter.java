@@ -152,9 +152,11 @@ public class ItemMetaAdapter extends TypeAdapter<ItemMeta> {
                         ((BannerMeta) meta).setPatterns(gson.getAdapter(List.class).read(in));
                         break;
                     case "block state":
-                        if (!(meta instanceof BlockStateMeta))
-                            meta = Bukkit.getServer().getItemFactory().getItemMeta(Material.CHEST);
-                        ((BlockStateMeta) meta).setBlockState(gson.getAdapter(BlockState.class).read(in));
+                        BlockState state = gson.getAdapter(BlockState.class).read(in);
+                        if (!(meta instanceof BlockStateMeta)) {
+                            meta = Bukkit.getServer().getItemFactory().getItemMeta(state.getType());
+                        }
+                        ((BlockStateMeta) meta).setBlockState(state);
                         break;
                     case "title":
                         if (!(meta instanceof BookMeta))

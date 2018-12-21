@@ -30,9 +30,14 @@ public class NBT extends org.thane.api.NBT {
         super(nbtToJsonElement(CraftItemStack.asNMSCopy(stack).getOrCreateTag()).getAsJsonObject());
     }
 
+    public NBT(JsonObject object) {
+        super(object);
+    }
+
     @Override
     public ItemStack copyOnto(ItemStack stack) {
         net.minecraft.server.v1_13_R2.ItemStack stack1 = CraftItemStack.asNMSCopy(stack);
+        combineWith(new NBT(stack));
         stack1.setTag((NBTTagCompound) jsonElementToNBT(asJsonObject()));
         return CraftItemStack.asBukkitCopy(stack1);
     }

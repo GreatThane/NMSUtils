@@ -1,0 +1,10 @@
+main: org.thane.NMSUtils
+name: NMSUtils
+version: ${project.version}
+authors: [Thane]
+description: No More Sh*tty Utils
+api-version: 1.13
+commands:
+  test:
+    usage: /test
+    description: Testing command.

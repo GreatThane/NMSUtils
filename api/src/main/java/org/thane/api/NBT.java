@@ -56,7 +56,7 @@ public class NBT implements Serializable {
         return stack;
     }
 
-    public void applyTo(ItemStack stack) throws IllegalAccessException {
+    public void applyTo(ItemStack stack) throws NoSuchFieldException {
     }
 
     public void combineWith(NBT nbt) {

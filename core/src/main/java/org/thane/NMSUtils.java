@@ -14,6 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
+import org.thane.adapters.BooleanSerializer;
 import org.thane.api.ItemStackTypeAdapterFactory;
 import org.thane.api.NBT;
 
@@ -36,10 +37,11 @@ public class NMSUtils extends JavaPlugin {
 
             itemStackTypeAdapterFactory = (ItemStackTypeAdapterFactory) Class.forName("org.thane.nms." + version + ".ItemStackTypeAdapterFactory").getConstructor().newInstance();
             GSON = new GsonBuilder().setPrettyPrinting().enableComplexMapKeySerialization().disableHtmlEscaping().registerTypeAdapterFactory(itemStackTypeAdapterFactory)
+                    .registerTypeAdapter(Boolean.class, new BooleanSerializer()).registerTypeAdapter(boolean.class, new BooleanSerializer())
                     .setExclusionStrategies(new ExclusionStrategy() {
                 @Override
                 public boolean shouldSkipField(FieldAttributes f) {
-                    return (f.getDeclaringClass().getPackage().getName().contains("net.minecraft.server") || f.getDeclaringClass().getPackage().getName().contains("craftbukkit"))
+                    return (f.getDeclaringClass().getPackage().getName().contains("net.minecraft.server") || f.getDeclaringClass().getPackage().getName().contains("org.bukkit.craftbukkit"))
                             && f.getName().equalsIgnoreCase("handle");
                 }
 
@@ -122,6 +124,10 @@ public class NMSUtils extends JavaPlugin {
 
     public static Gson getGson() {
         return GSON;
+    }
+
+    public static void setGson(Gson gson) {
+        GSON = gson;
     }
 
     public static ItemStackTypeAdapterFactory getItemStackTypeAdapter() {

@@ -4,24 +4,31 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.internal.LazilyParsedNumber;
+import com.google.gson.stream.MalformedJsonException;
 import net.minecraft.server.v1_13_R2.*;
 import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.inventory.ItemStack;
 
+import javax.management.RuntimeErrorException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class NBT extends org.thane.api.NBT {
 
-    private static Field handleField;
+    private static final Field handleField;
     static {
+        Field handleField1 = null;
         try {
-            handleField = CraftItemStack.class.getDeclaredField("handle");
-            handleField.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+            handleField1 = CraftItemStack.class.getDeclaredField("handle");
+            handleField1.setAccessible(true);
+        } catch (NoSuchFieldException ignored) {
+        } finally {
+            handleField = handleField1;
         }
     }
 
@@ -43,9 +50,14 @@ public class NBT extends org.thane.api.NBT {
     }
 
     @Override
-    public void applyTo(ItemStack stack) throws IllegalAccessException {
-        net.minecraft.server.v1_13_R2.ItemStack stack1 = (net.minecraft.server.v1_13_R2.ItemStack) handleField.get(stack);
-        stack1.setTag((NBTTagCompound) jsonElementToNBT(asJsonObject()));
+    public void applyTo(ItemStack stack) throws NoSuchFieldException {
+        if (handleField == null) throw new NoSuchFieldException("Unable to locate 'handle' field in CraftItemStack.class");
+        try {
+            net.minecraft.server.v1_13_R2.ItemStack stack1 = (net.minecraft.server.v1_13_R2.ItemStack) handleField.get(stack);
+            stack1.setTag((NBTTagCompound) jsonElementToNBT(asJsonObject()));
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private static NBTBase jsonElementToNBT(JsonElement element) {
@@ -56,20 +68,19 @@ public class NBT extends org.thane.api.NBT {
             } else if (primitive.isString()) {
                 return new NBTTagString(primitive.getAsString());
             } else if (primitive.isNumber()) {
+
                 Number number = primitive.getAsNumber();
-                if (number instanceof Integer) {
-                    return new NBTTagInt((Integer) number);
-                } else if (number instanceof Long) {
-                    return new NBTTagLong((Long) number);
-                } else if (number instanceof Float) {
-                    return new NBTTagFloat((Float) number);
-                } else if (number instanceof Double) {
-                    return new NBTTagDouble((Double) number);
-                } else if (number instanceof Byte) {
-                    return new NBTTagByte((Byte) number);
-                } else if (number instanceof Short) {
-                    return new NBTTagShort((Short) number);
-                }
+                if (number.doubleValue() % 1 != 0) {
+                    if (number.doubleValue() <= Float.MAX_VALUE) {
+                        return new NBTTagFloat(number.floatValue());
+                    } else return new NBTTagDouble(number.doubleValue());
+                } else if (number.longValue() <= Byte.MAX_VALUE) {
+                    return new NBTTagByte(number.byteValue());
+                } else if (number.longValue() <= Short.MAX_VALUE) {
+                    return new NBTTagShort(number.shortValue());
+                } else if (number.longValue() <= Integer.MAX_VALUE) {
+                    return new NBTTagInt(number.intValue());
+                } else return new NBTTagLong(number.longValue());
             }
         } else {
             if (element.isJsonArray()) {
@@ -116,7 +127,14 @@ public class NBT extends org.thane.api.NBT {
                 return compound;
             }
         }
-        return new NBTTagEnd();
+        throw new NBTTranslationException("Cannot determine type for Json element '" + element.toString() + "' of class " + element.getClass().getName());
+    }
+
+    public static class NBTTranslationException extends RuntimeException {
+
+        public NBTTranslationException(String msg) {
+            super(msg);
+        }
     }
 
     private static JsonElement nbtToJsonElement(NBTBase nbt) {
@@ -124,9 +142,7 @@ public class NBT extends org.thane.api.NBT {
             case NBTType.END:
                 return null;
             case NBTType.BYTE:
-                if (((NBTTagByte) nbt).asByte() > 1) {
                     return new JsonPrimitive(((NBTTagByte) nbt).asByte());
-                } else return new JsonPrimitive(((NBTTagByte) nbt).asByte() == 1);
             case NBTType.SHORT:
                 return new JsonPrimitive(((NBTTagShort) nbt).asShort());
             case NBTType.INT:
@@ -170,7 +186,7 @@ public class NBT extends org.thane.api.NBT {
                 }
                 return longArray;
         }
-        return null;
+        throw new NBTTranslationException("Cannot determine type for NBT element '" + nbt.toString() + "' of class " + nbt.getClass().getName());
     }
 
     private static class NBTType {

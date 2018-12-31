@@ -2,7 +2,6 @@ package org.thane.nms.v1_13_R2.adapters.items;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
@@ -25,6 +24,6 @@ public class NBTAdapter extends TypeAdapter<NBT> {
     @SuppressWarnings("unchecked")
     @Override
     public NBT read(JsonReader in) throws IOException {
-        return new org.thane.nms.v1_13_R2.NBT(gson.getAdapter(JsonObject.class).read(in));
+        return new org.thane.nms.v1_13_R2.NBT(gson.getAdapter(JsonElement.class).read(in).getAsJsonObject());
     }
 }

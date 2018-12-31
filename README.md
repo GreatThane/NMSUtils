@@ -18,4 +18,4 @@ NBT internally is stored and functions as json, so I based this entirely library
 #### My custom object doesn't work with NBT!
 Don't worry, simply use `NMSUtils.getBuilder()` and add your own personal TypeAdapter. After that, call `NMSUtils.instantiateGson()` to get the NBT classes to use your adapter.
 #### I've discovered a bug or have thought of a valuable feature!
-Shoot me a message then, why are you checking the readme?...
+(Shoot me a message then, why are you checking the readme?...)[https://github.com/GreatThane/NMSUtils/issues]

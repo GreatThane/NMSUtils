@@ -6,6 +6,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.apache.commons.io.output.StringBuilderWriter;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -22,12 +23,13 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
         this.gson = gson;
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({"deprecation", "unchecked"})
     @Override
     public void write(JsonWriter out, ItemStack value) throws IOException {
         if (value == null) {
             out.nullValue();
             return;
+
         }
         out.beginObject();
         out.name("material");
@@ -40,15 +42,20 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
         if (value.hasItemMeta()) {
             StringBuilderWriter stringWriter = new StringBuilderWriter();
             JsonWriter writer = new JsonWriter(stringWriter);
-            gson.getAdapter(ItemMeta.class).write(writer, value.getItemMeta());
-            if (!stringWriter.getBuilder().toString().contains("{}"))
-                out.name("meta").jsonValue(stringWriter.getBuilder().toString());
+            TypeAdapter metaTypeAdapter = gson.getAdapter(Bukkit.getItemFactory().getItemMeta(value.getType()).getClass());
+            metaTypeAdapter.write(writer, value.getItemMeta());
+            if (!stringWriter.getBuilder().toString().contains("{}")) {
+                out.name("meta");
+                metaTypeAdapter.write(out, value.getItemMeta());
+            }
             writer.flush();
             writer.close();
         }
         NBT nbt = new org.thane.nms.v1_13_R2.NBT(value).withExcludes("Unbreakable",
                 "HideFlags", "display", "Damage", "AttributeModifiers", "BlockEntityTag.Items", "BlockEntityTag.Lock", "BlockEntityTag.id", "Enchantments",
-                "BlockEntityTag.Command", "BlockEntityTag.CustomName", "BlockEntityTag.Primary", "BlockEntityTag.Secondary", "CustomPotionColor", "CustomPotionEffects", "Potion");
+                "BlockEntityTag.Command", "BlockEntityTag.CustomName", "BlockEntityTag.Primary", "BlockEntityTag.Secondary", "CustomPotionColor", "CustomPotionEffects", "Potion",
+                "StoredEnchantments", "BlockEntityTag.Patterns", "BlockEntityTag.x", "BlockEntityTag.y", "BlockEntityTag.z", "generation", "pages", "author", "title", "Fireworks",
+                "Recipes", "map_is_scaling", "map", "SkullOwner", "Name", "BucketVariantTag");
         if (!nbt.isEmpty()) {
             out.name("nbt");
             gson.getAdapter(NBT.class).write(out, nbt);
@@ -77,7 +84,7 @@ public class ItemStackAdapter extends TypeAdapter<ItemStack> {
                         break;
                     case "meta":
                         if (stack == null) return null;
-                        stack.setItemMeta(gson.getAdapter(ItemMeta.class).read(in));
+                        stack.setItemMeta(gson.getAdapter(Bukkit.getItemFactory().getItemMeta(stack.getType()).getClass()).read(in));
                         break;
                     case "data":
                         if (stack == null) return null;

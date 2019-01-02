@@ -4,19 +4,19 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.google.gson.internal.LazilyParsedNumber;
-import com.google.gson.stream.MalformedJsonException;
 import net.minecraft.server.v1_13_R2.*;
+import org.bukkit.NamespacedKey;
+import org.bukkit.block.Block;
+import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
-import javax.management.RuntimeErrorException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class NBT extends org.thane.api.NBT {
 
@@ -41,6 +41,22 @@ public class NBT extends org.thane.api.NBT {
         super(object);
     }
 
+    @SuppressWarnings("ConstantConditions")
+    public NBT(Entity entity) {
+        super(nbtToJsonElement(getEntityTag(entity)).getAsJsonObject());
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public NBT(Block block) {
+        super(nbtToJsonElement(((CraftWorld) block.getWorld()).getTileEntityAt(block.getX(), block.getY(), block.getZ()).aa_()).getAsJsonObject());
+    }
+
+    private static NBTTagCompound getEntityTag(Entity entity) {
+        NBTTagCompound compound = new NBTTagCompound();
+        ((CraftEntity) entity).getHandle().c(compound);
+        return compound;
+    }
+
     @Override
     public ItemStack copyOnto(ItemStack stack) {
         net.minecraft.server.v1_13_R2.ItemStack stack1 = CraftItemStack.asNMSCopy(stack);
@@ -58,6 +74,21 @@ public class NBT extends org.thane.api.NBT {
         } catch (IllegalAccessException ex) {
             ex.printStackTrace();
         }
+    }
+
+    @Override
+    public void applyTo(Entity entity) {
+        ((CraftEntity) entity).getHandle().f((NBTTagCompound) jsonElementToNBT(asJsonObject()));
+    }
+
+    @Override
+    public void applyTo(Block block) {
+        ((CraftWorld) block.getWorld()).getTileEntityAt(block.getX(), block.getY(), block.getZ()).load((NBTTagCompound) jsonElementToNBT(asJsonObject()));
+    }
+
+    @Override
+    public boolean isAppliable() {
+        return true;
     }
 
     private static NBTBase jsonElementToNBT(JsonElement element) {

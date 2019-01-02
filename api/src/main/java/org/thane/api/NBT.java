@@ -1,6 +1,8 @@
 package org.thane.api;
 
 import com.google.gson.*;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
 
 import java.io.Serializable;
@@ -59,6 +61,10 @@ public class NBT implements Serializable {
     public void applyTo(ItemStack stack) throws NoSuchFieldException {
     }
 
+    public void applyTo(Entity entity) {}
+
+    public void applyTo(Block block) {}
+
     public void combineWith(NBT nbt) {
         for (Map.Entry<String, JsonElement> entry : nbt.asJsonObject().entrySet()) {
             this.asJsonObject().add(entry.getKey(), entry.getValue());
@@ -92,8 +98,8 @@ public class NBT implements Serializable {
         return new NBT(object);
     }
 
-    public static NBT deserialize(String json) {
-        return new NBT(new JsonParser().parse(json).getAsJsonObject());
+    public boolean isAppliable() {
+        return false;
     }
 
     public static Gson getGson() {

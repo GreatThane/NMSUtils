@@ -4,6 +4,7 @@ version: ${project.version}
 authors: [Thane]
 description: No More Sh*tty Utils
 api-version: 1.13
+softdepend: [ProtocolLib]
 commands:
   test:
     usage: /test

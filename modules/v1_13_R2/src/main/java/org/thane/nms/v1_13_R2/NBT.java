@@ -1,13 +1,12 @@
 package org.thane.nms.v1_13_R2;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import net.minecraft.server.v1_13_R2.*;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_13_R2.block.CraftBlock;
+import org.bukkit.craftbukkit.v1_13_R2.block.CraftCommandBlock;
 import org.bukkit.craftbukkit.v1_13_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_13_R2.inventory.CraftItemStack;
 import org.bukkit.entity.Entity;
@@ -48,6 +47,7 @@ public class NBT extends org.thane.api.NBT {
 
     @SuppressWarnings("ConstantConditions")
     public NBT(Block block) {
+        CraftCommandBlock
         super(nbtToJsonElement(((CraftWorld) block.getWorld()).getTileEntityAt(block.getX(), block.getY(), block.getZ()).aa_()).getAsJsonObject());
     }
 
@@ -116,46 +116,55 @@ public class NBT extends org.thane.api.NBT {
         } else {
             if (element.isJsonArray()) {
                 NBTBase base = jsonElementToNBT(element.getAsJsonArray().get(0));
-                switch (base.getTypeId()) {
-                    case NBTType.END:
-                        return new NBTTagByteArray(new byte[1]);
-                    case NBTType.BYTE:
-                        List<Byte> bytes = new ArrayList<>();
-                        for (JsonElement element1 : element.getAsJsonArray()) {
-                            bytes.add(element1.getAsByte());
-                        }
-                        return new NBTTagByteArray(bytes);
-                    case NBTType.SHORT:
-                        List<Integer> shorts = new ArrayList<>();
-                        for (JsonElement element1 : element.getAsJsonArray()) {
-                            shorts.add(element1.getAsInt());
-                        }
-                        return new NBTTagIntArray(shorts);
-                    case NBTType.INT:
-                        List<Integer> ints = new ArrayList<>();
-                        for (JsonElement element1 : element.getAsJsonArray()) {
-                            ints.add(element1.getAsInt());
-                        }
-                        return new NBTTagIntArray(ints);
-                    case NBTType.LONG:
-                        List<Long> longs = new ArrayList<>();
-                        for (JsonElement element1 : element.getAsJsonArray()) {
-                            longs.add(element1.getAsLong());
-                        }
-                        return new NBTTagLongArray(longs);
-                    default:
-                        NBTTagList list = new NBTTagList();
-                        for (JsonElement element1 : element.getAsJsonArray()) {
-                            list.add(jsonElementToNBT(element1));
-                        }
-                        return list;
+                if (base != null) {
+                    switch (base.getTypeId()) {
+                        case NBTType.END:
+                            return new NBTTagByteArray(new byte[1]);
+                        case NBTType.BYTE:
+                            List<Byte> bytes = new ArrayList<>();
+                            for (JsonElement element1 : element.getAsJsonArray()) {
+                                bytes.add(element1.getAsByte());
+                            }
+                            return new NBTTagByteArray(bytes);
+                        case NBTType.SHORT:
+                            List<Integer> shorts = new ArrayList<>();
+                            for (JsonElement element1 : element.getAsJsonArray()) {
+                                shorts.add(element1.getAsInt());
+                            }
+                            return new NBTTagIntArray(shorts);
+                        case NBTType.INT:
+                            List<Integer> ints = new ArrayList<>();
+                            for (JsonElement element1 : element.getAsJsonArray()) {
+                                ints.add(element1.getAsInt());
+                            }
+                            return new NBTTagIntArray(ints);
+                        case NBTType.LONG:
+                            List<Long> longs = new ArrayList<>();
+                            for (JsonElement element1 : element.getAsJsonArray()) {
+                                longs.add(element1.getAsLong());
+                            }
+                            return new NBTTagLongArray(longs);
+                        default:
+                            NBTTagList list = new NBTTagList();
+                            for (JsonElement element1 : element.getAsJsonArray()) {
+                                NBTBase base1 = jsonElementToNBT(element1);
+                                if (base1 != null) {
+                                    list.add(base1);
+                                }
+                            }
+                            return list;
+                    }
                 }
             } else if (element.isJsonObject()) {
                 NBTTagCompound compound = new NBTTagCompound();
                 for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
-                    compound.set(entry.getKey(), jsonElementToNBT(entry.getValue()));
+                    if (!entry.getValue().isJsonNull()) {
+                        compound.set(entry.getKey(), jsonElementToNBT(entry.getValue()));
+                    }
                 }
                 return compound;
+            } else if (element.isJsonNull()) {
+                return null;
             }
         }
         throw new NBTTranslationException("Cannot determine type for Json element '" + element.toString() + "' of class " + element.getClass().getName());
@@ -169,6 +178,7 @@ public class NBT extends org.thane.api.NBT {
     }
 
     private static JsonElement nbtToJsonElement(NBTBase nbt) {
+        if (nbt == null) return JsonNull.INSTANCE;
         switch (nbt.getTypeId()) {
             case NBTType.END:
                 return null;

@@ -15,7 +15,9 @@ public class NBT implements Serializable {
     private JsonObject nbt;
 
     public NBT(JsonObject element) {
-        nbt = element;
+        if (element == null || element.isJsonNull()) {
+            nbt = new JsonObject();
+        } else nbt = element;
     }
 
     public void addNBT(String key, JsonElement element) {

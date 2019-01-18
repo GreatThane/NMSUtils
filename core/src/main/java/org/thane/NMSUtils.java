@@ -26,19 +26,17 @@ import org.bukkit.potion.PotionType;
 import org.thane.adapters.BooleanSerializer;
 import org.thane.api.ItemStackTypeAdapterFactory;
 import org.thane.api.NBT;
-import org.thane.nms.v1_13_R2.adapters.items.meta.ItemMetaAdapter;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
+@SuppressWarnings("Duplicates")
 public class NMSUtils extends JavaPlugin {
 
-    static String version;
+    static String VERSION;
     private static ItemStackTypeAdapterFactory itemStackTypeAdapterFactory;
 
     private static GsonBuilder GSON_BUILDER;
@@ -47,9 +45,9 @@ public class NMSUtils extends JavaPlugin {
     static {
         try {
             String packageName = Bukkit.getServer().getClass().getPackage().getName();
-            version = packageName.substring(packageName.lastIndexOf('.') + 1);
+            VERSION = packageName.substring(packageName.lastIndexOf('.') + 1);
 
-            itemStackTypeAdapterFactory = (ItemStackTypeAdapterFactory) Class.forName("org.thane.nms." + version + ".ItemStackTypeAdapterFactory").getConstructor().newInstance();
+            itemStackTypeAdapterFactory = (ItemStackTypeAdapterFactory) Class.forName("org.thane.nms." + VERSION + ".ItemStackTypeAdapterFactory").getConstructor().newInstance();
             GSON_BUILDER = new GsonBuilder().setPrettyPrinting().enableComplexMapKeySerialization().disableHtmlEscaping().registerTypeAdapterFactory(itemStackTypeAdapterFactory)
                     .registerTypeAdapter(Boolean.class, new BooleanSerializer()).registerTypeAdapter(boolean.class, new BooleanSerializer())
                     .setExclusionStrategies(new ExclusionStrategy() {
@@ -67,14 +65,17 @@ public class NMSUtils extends JavaPlugin {
             GSON = GSON_BUILDER.create();
             NBT.setGson(GSON);
             //noinspection unchecked
-            Class<NBT> nbtClass = (Class<NBT>) Class.forName("org.thane.nms." + version + ".NBT");
+            Class<NBT> nbtClass = (Class<NBT>) Class.forName("org.thane.nms." + VERSION + ".NBT");
             itemNBTConstructor = nbtClass.getConstructor(ItemStack.class);
             jsonNBTConstructor = nbtClass.getConstructor(JsonObject.class);
             entityNBTConstructor = nbtClass.getConstructor(Entity.class);
             blockNBTConstructor = nbtClass.getConstructor(Block.class);
         } catch (ClassNotFoundException e) {
             Bukkit.getLogger().warning("Unable to find specific version support, switching to reflection fallback classes...");
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            e.getTargetException().printStackTrace();
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
     }
@@ -97,13 +98,7 @@ public class NMSUtils extends JavaPlugin {
     @Override
     public void onEnable() {
         // Plugin startup logic
-        SkullHelper.init();
         if (!getDataFolder().exists()) getDataFolder().mkdirs();
-    }
-
-    @Override
-    public void onDisable() {
-        SkullHelper.saveCache();
     }
 
     @Override
@@ -246,7 +241,11 @@ public class NMSUtils extends JavaPlugin {
     public static NBT getNBT(ItemStack stack) {
         try {
             return itemNBTConstructor.newInstance(stack);
-        } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            e.getTargetException().printStackTrace();
+            return new NBT(new JsonObject());
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             return new NBT(new JsonObject());
         }
@@ -255,7 +254,11 @@ public class NMSUtils extends JavaPlugin {
     public static NBT getNBT(Entity entity) {
         try {
             return entityNBTConstructor.newInstance(entity);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            e.getTargetException().printStackTrace();
+            return new NBT(new JsonObject());
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             return new NBT(new JsonObject());
         }
@@ -264,7 +267,11 @@ public class NMSUtils extends JavaPlugin {
     public static NBT getNBT(Block block) {
         try {
             return blockNBTConstructor.newInstance(block);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            e.getTargetException().printStackTrace();
+            return new NBT(new JsonObject());
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             return new NBT(new JsonObject());
         }
@@ -273,7 +280,11 @@ public class NMSUtils extends JavaPlugin {
     public static NBT toNBT(JsonObject object) {
         try {
             return jsonNBTConstructor.newInstance(object);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            e.getTargetException().printStackTrace();
+            return new NBT(new JsonObject());
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             return new NBT(new JsonObject());
         }
@@ -286,7 +297,11 @@ public class NMSUtils extends JavaPlugin {
     public static NBT deserializeNBT(String string) {
         try {
             return jsonNBTConstructor.newInstance(new JsonParser().parse(string).getAsJsonObject());
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (InvocationTargetException e) {
+            e.getCause().printStackTrace();
+            e.getTargetException().printStackTrace();
+            return new NBT(new JsonObject());
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
             return new NBT(new JsonObject());
         }
